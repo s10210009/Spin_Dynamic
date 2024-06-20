@@ -36,11 +36,13 @@ int main(void)
   double dt = 1E-15;
   double gamma = 1.76*(1E11), lumba=0.1; 
   double analytic_factor1 ,analytic_factor2;
+  double H_ext = 10.0;
   int time_step = 400000;
+
   vector analytic_spin={1.0 , 0.0, 0.0};
 
   vector spin = {1.0, 0.0, 0.0};
-  vector H = {0.0, 0.0, 1.0};
+  vector H = {0.0, 0.0, H_ext};
   vector d_spin = {0.0, 0.0, 0.0};
   vector cross_1 = {0.0, 0.0, 0.0};
   vector cross_2 = {0.0, 0.0, 0.0};
@@ -59,11 +61,13 @@ int main(void)
     vector cross_2 = crossProduct(scalarMultiply(spin,lumba), cross_1);
     d_spin=scalarMultiply( add(cross_1,cross_2), -1*gamma/(1+lumba*lumba));
     spin = add(spin, scalarMultiply(d_spin,dt) );
-    analytic_factor1 = lumba*gamma*1*dt*i/(1+lumba*lumba);
-    analytic_factor2 = gamma*1*dt*i/(1+lumba*lumba);
+
+    analytic_factor1 = H_ext*lumba*gamma*1*dt*i/(1+lumba*lumba);
+    analytic_factor2 = H_ext*gamma*1*dt*i/(1+lumba*lumba);
     analytic_spin.x = sech(analytic_factor1)*cos(analytic_factor2);
     analytic_spin.y = sech(analytic_factor1)*sin(analytic_factor2);
     analytic_spin.z = tanh(analytic_factor1);
+    
     fprintf(fptr, "%.16f %.16f %.16f %.16f %.16f %.16f %.16f\n", dt*i, spin.x, spin.y, spin.z, analytic_spin.x,analytic_spin.y,analytic_spin.z);
   }  
   fclose(fptr);
