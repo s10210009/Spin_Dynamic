@@ -8,6 +8,7 @@ typedef struct {
     float x; float y; float z;
 } vector;
 
+
 /////////////////////////define vector caulation function////////////////////////////////////////
 vector crossProduct(vector a, vector b) {
     vector result;
@@ -29,14 +30,26 @@ vector add(vector a, vector b) {
 double sech(double x) {
     return 1 / cosh(x);
 }
+vector H = {0.0, 0.0, 10.0};
+double H_ext=10.0;
+double lumba = 0.1;
+double gama = 1.76 * 1E11; // Update gamma to the larger value
+double dt = 1E-15;
+
+vector f(double fspinx, double fspiny, double fspinz,double dtime) {
+    vector fspin = {fspinx, fspiny, fspinz};
+    vector eq18_1 = crossProduct(fspin, H);
+    vector eq18_2 = crossProduct(scalarMultiply(fspin, lumba), eq18_1);
+    vector d_spin = scalarMultiply(add(eq18_1, eq18_2), -1 * gama / (1 + lumba * lumba));
+    fspin = add(fspin, scalarMultiply(d_spin, dtime));
+    return fspin;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(void)
 {
-  double dt = 1E-15;
-  double gamma = 1.76*(1E11), lumba=0.1; 
   double analytic_factor1 ,analytic_factor2;
-  double H_ext = 10.0;
   int time_step = 400000;
 
   vector analytic_spin={1.0 , 0.0, 0.0};
@@ -57,13 +70,9 @@ int main(void)
  //////////////////////iteration of spin/////////////////////
 
   for(int i = 0; i < time_step; i++) {
-    vector cross_1 = crossProduct(spin, H);
-    vector cross_2 = crossProduct(scalarMultiply(spin,lumba), cross_1);
-    d_spin=scalarMultiply( add(cross_1,cross_2), -1*gamma/(1+lumba*lumba));
-    spin = add(spin, scalarMultiply(d_spin,dt) );
-
-    analytic_factor1 = H_ext*lumba*gamma*1*dt*i/(1+lumba*lumba);
-    analytic_factor2 = H_ext*gamma*1*dt*i/(1+lumba*lumba);
+    spin = f(spin.x, spin.y, spin.z,dt);
+    analytic_factor1 = H_ext*lumba*gama*1*dt*i/(1+lumba*lumba);
+    analytic_factor2 = H_ext*gama*1*dt*i/(1+lumba*lumba);
     analytic_spin.x = sech(analytic_factor1)*cos(analytic_factor2);
     analytic_spin.y = sech(analytic_factor1)*sin(analytic_factor2);
     analytic_spin.z = tanh(analytic_factor1);
