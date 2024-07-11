@@ -22,11 +22,24 @@ vector scalarMultiply(vector a, float b) {
     return result;
 }
 
+vector scalarDivide(vector a, float b) {
+    vector result;
+    result.x = a.x/b; result.y = a.y/b; result.z = a.z/b;
+    return result;
+}
+
+
 vector add(vector a, vector b) {
     vector result;
     result.x = a.x+b.x; result.y = a.y+b.y; result.z = a.z+b.z;
     return result;
 }
+vector minus(vector a, vector b) {
+    vector result;
+    result.x = a.x-b.x; result.y = a.y-b.y; result.z = a.z-b.z;
+    return result;
+}
+
 double sech(double x) {
     return 1 / cosh(x);
 }
@@ -35,7 +48,9 @@ double H_ext=10.0;
 double lumba = 0.1;
 double gama = 1.76 * 1E11; // Update gamma to the larger value
 double dt = 1E-15;
-
+//vector f(vector spin){
+//
+//}
 vector f(double fspinx, double fspiny, double fspinz,double dtime) {
     vector fspin = {fspinx, fspiny, fspinz};
     vector eq18_1 = crossProduct(fspin, H);
@@ -55,7 +70,12 @@ int main(void)
   vector analytic_spin={1.0 , 0.0, 0.0};
 
   vector spin = {1.0, 0.0, 0.0};
-  vector H = {0.0, 0.0, H_ext};
+  vector Euler = {1.0, 0.0, 0.0};
+  vector rk1 ={0.0,0.0,0.0};
+  vector rk2 ={0.0,0.0,0.0};
+  vector rk3 ={0.0,0.0,0.0};
+  vector rk4 ={0.0,0.0,0.0};
+  vector rk_spin  ={0.0,0.0,0.0};
   vector d_spin = {0.0, 0.0, 0.0};
   vector cross_1 = {0.0, 0.0, 0.0};
   vector cross_2 = {0.0, 0.0, 0.0};
@@ -69,14 +89,27 @@ int main(void)
   }
  //////////////////////iteration of spin/////////////////////
 
-  for(int i = 0; i < time_step; i++) {
-    spin = f(spin.x, spin.y, spin.z,dt);
+  for(int i = 0; i < 5; i++) {
+    rk1 = f(spin.x, spin.y, spin.z, dt);
+
+    rk2 = f(spin.x + dt*rk1.x/2.0, spin.y + dt*rk1.y/2.0, spin.z + dt*rk1.z/2.0, 1.5*dt);
+
+    rk3 = f(spin.x + dt*rk2.x/2.0, spin.y + dt*rk2.y/2.0, spin.z + dt*rk2.z/2.0, 1.5*dt);
+
+    rk4 = f(spin.x + dt*rk3.x, spin.y + dt*rk3.y, spin.z + dt*rk3.z, 2*dt);
+
+    Euler = f(Euler.x, Euler.y, Euler.z,dt);
+    spin.x = (rk1.x + 2*rk2.x + 2*rk3.x + rk4.x)/6.0;
+    spin.y = (rk1.y + 2*rk2.y + 2*rk3.y + rk4.y)/6.0;
+    spin.z = (rk1.z + 2*rk2.z + 2*rk3.z + rk4.z)/6.0;
+  
+
     analytic_factor1 = H_ext*lumba*gama*1*dt*i/(1+lumba*lumba);
     analytic_factor2 = H_ext*gama*1*dt*i/(1+lumba*lumba);
     analytic_spin.x = sech(analytic_factor1)*cos(analytic_factor2);
     analytic_spin.y = sech(analytic_factor1)*sin(analytic_factor2);
     analytic_spin.z = tanh(analytic_factor1);
-    
+    printf("%.16f %.16f %.16f %.16f %.16f %.16f %.16f %.16f \n", dt*i, rk1.x, rk2.x, rk3.x, rk4.x,spin.x ,analytic_spin.x,Euler.x);
     fprintf(fptr, "%.16f %.16f %.16f %.16f %.16f %.16f %.16f\n", dt*i, spin.x, spin.y, spin.z, analytic_spin.x,analytic_spin.y,analytic_spin.z);
   }  
   fclose(fptr);
