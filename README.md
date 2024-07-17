@@ -3,9 +3,9 @@ nanomaterials, Condens. Matter 26 (2014) 103202. We use RK4 to simulate the chan
 You could varies the parameter in spin.c
 
 and run the program by 
-
+\n
 gcc spin.c -o spin -lm
-
+/n
 ./spin
 python plot.py (or python3 plot.py)
 
