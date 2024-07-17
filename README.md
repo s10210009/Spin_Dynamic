@@ -7,3 +7,5 @@ gcc spin.c -o spin -lm
 python plot.py (or python3 plot.py)
 
 Then, you could see the output figures.
+![spin](https://github.com/user-attachments/assets/c201f756-a954-4120-8fba-51581d7ab7ee)
+![error](https://github.com/user-attachments/assets/1180458a-9fd8-453a-acad-43d2a3c73fb9)
