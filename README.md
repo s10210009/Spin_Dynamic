@@ -1,5 +1,5 @@
-## The program is to simulate spin dynamic under external magnetic field. The algorithm is followed by this paper, Atomistic spin model simulations of magnetic
-nanomaterials, Condens. Matter 26 (2014) 103202. 
+## The program is to simulate spin dynamic under external magnetic field. 
+The algorithm is followed by this paper, Atomistic spin model simulations of magnetic nanomaterials, Condens. Matter 26 (2014) 103202. 
 We use RK4 to simulate the change of spin with time. You could varies the parameter in spin.c
 
 ## Run the program by 
