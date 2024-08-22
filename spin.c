@@ -52,6 +52,7 @@ double H_ext=10.0;
 double lumba = 0.05;
 double gama = 1.76 * 1E11; // Update gamma to the larger value
 double dt = 1E-15;
+double thirty=30.0;
 //vector f(vector spin){
 //
 //}
@@ -70,19 +71,20 @@ int main(void)
 {
   double analytic_factor1 ,analytic_factor2;
   int time_step = 200000;
-
+  int num_spin = 10;
+  vector multi_spin[num_spin];
+  vector totalspin={0.0,0.0,0.0};
+  for(int i = 0; i < num_spin; i++) {
+     multi_spin[i].x = 1.0;
+     multi_spin[i].y = 0.0;
+     multi_spin[i].z = 0.0;
+//     printf("%.16f %.16f %.16f\n",multi_spin[i].x,multi_spin[i].y,multi_spin[i].z);
+  }
   vector analytic_spin={1.0 , 0.0, 0.0};
-
-  vector spin = {1.0, 0.0, 0.0};
-  vector Euler = {1.0, 0.0, 0.0};
   vector rk1 ={0.0,0.0,0.0};
   vector rk2 ={0.0,0.0,0.0};
   vector rk3 ={0.0,0.0,0.0};
   vector rk4 ={0.0,0.0,0.0};
-  vector rk_spin  ={0.0,0.0,0.0};
-  vector d_spin = {0.0, 0.0, 0.0};
-  vector cross_1 = {0.0, 0.0, 0.0};
-  vector cross_2 = {0.0, 0.0, 0.0};
 
   /////////////////////open file//////////////////////////////
   FILE *fptr;
@@ -100,25 +102,32 @@ int main(void)
     analytic_spin.x = sech(analytic_factor1)*cos(analytic_factor2);
     analytic_spin.y = sech(analytic_factor1)*sin(analytic_factor2);
     analytic_spin.z = tanh(analytic_factor1);
-    fprintf(fptr, "%.16f %.16f %.16f %.16f %.16f %.16f %.16f\n", dt*i, spin.x, spin.y, spin.z, analytic_spin.x,analytic_spin.y,analytic_spin.z);
-    rk1 = f(spin.x, spin.y, spin.z, 0.0);
-    rk1 = scalarMultiply(rk1, dt);
+    fprintf(fptr, "%.16f %.16f %.16f %.16f %.16f %.16f %.16f\n", dt*i, totalspin.x, totalspin.y, totalspin.z, analytic_spin.x*num_spin,analytic_spin.y*num_spin,analytic_spin.z*num_spin);
+    totalspin.x=0.0,totalspin.y=0.0,totalspin.z=0.0;
 
-    rk2 = f(spin.x + rk1.x/2.0, spin.y + rk1.y/2.0, spin.z + rk1.z/2.0, 0.5*dt);
-    rk2 = scalarMultiply(rk2, dt);
+    for (int j = 0; j < num_spin; j++) {
+      rk1 = f(multi_spin[j].x, multi_spin[j].y, multi_spin[j].z, 0.0);
+      rk1 = scalarMultiply(rk1, dt);
 
-    rk3 = f(spin.x + rk2.x/2.0, spin.y + rk2.y/2.0, spin.z + rk2.z/2.0, 0.5*dt);
-    rk3 = scalarMultiply(rk3, dt);
-    
-    rk4 = f(spin.x + rk3.x, spin.y + rk3.y, spin.z + rk3.z, dt);
-    rk4 = scalarMultiply(rk4, dt);
+      rk2 = f(multi_spin[j].x + rk1.x/2.0, multi_spin[j].y + rk1.y/2.0, multi_spin[j].z + rk1.z/2.0, 0.5*dt);
+      rk2 = scalarMultiply(rk2, dt);
 
-    spin.x = spin.x + (rk1.x + 2*rk2.x + 2*rk3.x + rk4.x)/6.0;
-    spin.y = spin.y + (rk1.y + 2*rk2.y + 2*rk3.y + rk4.y)/6.0;
-    spin.z = spin.z + (rk1.z + 2*rk2.z + 2*rk3.z + rk4.z)/6.0;
-    spin = normalized(spin);
-   // printf("%.16f %.16f %.16f %.16f %.16f %.16f %.16f \n", dt*i, rk1.x, rk2.x, rk3.x, rk4.x,spin.x ,analytic_spin.x);
+      rk3 = f(multi_spin[j].x + rk2.x/2.0, multi_spin[j].y + rk2.y/2.0, multi_spin[j].z + rk2.z/2.0, 0.5*dt);
+      rk3 = scalarMultiply(rk3, dt);
+
+      rk4 = f(multi_spin[j].x + rk3.x, multi_spin[j].y + rk3.y, multi_spin[j].z + rk3.z, dt);
+      rk4 = scalarMultiply(rk4, dt);
+
+      multi_spin[j].x = multi_spin[j].x + (rk1.x + 2*rk2.x + 2*rk3.x + rk4.x)/6.0;
+      multi_spin[j].y = multi_spin[j].y + (rk1.y + 2*rk2.y + 2*rk3.y + rk4.y)/6.0;
+      multi_spin[j].z = multi_spin[j].z + (rk1.z + 2*rk2.z + 2*rk3.z + rk4.z)/6.0;
+      multi_spin[j] = normalized(multi_spin[j]);
+    }
+    for (int j = 0; j < num_spin; j++) {
+      totalspin.x+=multi_spin[j].x; totalspin.y+=multi_spin[j].y; totalspin.z+=multi_spin[j].z;
+    }
   }  
+  
   fclose(fptr);
   return 0;
 }
