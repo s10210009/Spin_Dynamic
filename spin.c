@@ -5,7 +5,7 @@
 #include <math.h>
 ///////gcc spin.c -o spin -lm//// make sure the math modle can run
 typedef struct {
-    float x; float y; float z;
+    double x; double y; double z;
 } vector;
 
 
@@ -16,13 +16,13 @@ vector crossProduct(vector a, vector b) {
     return result;
 }
 
-vector scalarMultiply(vector a, float b) {
+vector scalarMultiply(vector a, double b) {
     vector result;
     result.x = a.x*b; result.y = a.y*b; result.z = a.z*b;
     return result;
 }
 
-vector scalarDivide(vector a, float b) {
+vector scalarDivide(vector a, double b) {
     vector result;
     result.x = a.x/b; result.y = a.y/b; result.z = a.z/b;
     return result;
@@ -40,12 +40,16 @@ vector minus(vector a, vector b) {
     return result;
 }
 
+vector normalized(vector a){
+    a=scalarMultiply(a, 1.0/sqrt(a.x*a.x+a.y*a.y+a.z*a.z));
+    return a;
+}
 double sech(double x) {
     return 1 / cosh(x);
 }
 vector H = {0.0, 0.0, 10.0};
 double H_ext=10.0;
-double lumba = 0.1;
+double lumba = 0.05;
 double gama = 1.76 * 1E11; // Update gamma to the larger value
 double dt = 1E-15;
 //vector f(vector spin){
@@ -55,8 +59,8 @@ vector f(double fspinx, double fspiny, double fspinz,double dtime) {
     vector fspin = {fspinx, fspiny, fspinz};
     vector eq18_1 = crossProduct(fspin, H);
     vector eq18_2 = crossProduct(scalarMultiply(fspin, lumba), eq18_1);
-    vector d_spin = scalarMultiply(add(eq18_1, eq18_2), -1 * gama / (1 + lumba * lumba));
-    fspin = add(fspin, scalarMultiply(d_spin, dtime));
+    vector d_spin = scalarMultiply(add(eq18_1, eq18_2), -1.0 * gama / (1.0 + lumba * lumba));
+//    fspin = add(fspin, scalarMultiply(d_spin, dtime));
     return d_spin;
 }
 
@@ -65,7 +69,7 @@ vector f(double fspinx, double fspiny, double fspinz,double dtime) {
 int main(void)
 {
   double analytic_factor1 ,analytic_factor2;
-  int time_step = 400000;
+  int time_step = 200000;
 
   vector analytic_spin={1.0 , 0.0, 0.0};
 
@@ -90,6 +94,13 @@ int main(void)
  //////////////////////iteration of spin/////////////////////
 
   for(int i = 0; i < time_step; i++) {
+    analytic_factor1 = H_ext*lumba*gama*dt*(i)/(1+lumba*lumba);
+    analytic_factor2 = H_ext*gama*dt*(i)/(1+lumba*lumba);
+
+    analytic_spin.x = sech(analytic_factor1)*cos(analytic_factor2);
+    analytic_spin.y = sech(analytic_factor1)*sin(analytic_factor2);
+    analytic_spin.z = tanh(analytic_factor1);
+    fprintf(fptr, "%.16f %.16f %.16f %.16f %.16f %.16f %.16f\n", dt*i, spin.x, spin.y, spin.z, analytic_spin.x,analytic_spin.y,analytic_spin.z);
     rk1 = f(spin.x, spin.y, spin.z, 0.0);
     rk1 = scalarMultiply(rk1, dt);
 
@@ -105,18 +116,12 @@ int main(void)
     spin.x = spin.x + (rk1.x + 2*rk2.x + 2*rk3.x + rk4.x)/6.0;
     spin.y = spin.y + (rk1.y + 2*rk2.y + 2*rk3.y + rk4.y)/6.0;
     spin.z = spin.z + (rk1.z + 2*rk2.z + 2*rk3.z + rk4.z)/6.0;
-  
-
-    analytic_factor1 = H_ext*lumba*gama*1*dt*i/(1+lumba*lumba);
-    analytic_factor2 = H_ext*gama*1*dt*i/(1+lumba*lumba);
-    analytic_spin.x = sech(analytic_factor1)*cos(analytic_factor2);
-    analytic_spin.y = sech(analytic_factor1)*sin(analytic_factor2);
-    analytic_spin.z = tanh(analytic_factor1);
-    printf("%.16f %.16f %.16f %.16f %.16f %.16f %.16f \n", dt*i, rk1.x, rk2.x, rk3.x, rk4.x,spin.x ,analytic_spin.x);
-    fprintf(fptr, "%.16f %.16f %.16f %.16f %.16f %.16f %.16f\n", dt*i, spin.x, spin.y, spin.z, analytic_spin.x,analytic_spin.y,analytic_spin.z);
+    spin = normalized(spin);
+   // printf("%.16f %.16f %.16f %.16f %.16f %.16f %.16f \n", dt*i, rk1.x, rk2.x, rk3.x, rk4.x,spin.x ,analytic_spin.x);
   }  
   fclose(fptr);
   return 0;
 }
+
 
 
