@@ -70,9 +70,13 @@ vector f(double fspinx, double fspiny, double fspinz,double dtime) {
 int main(void)
 {
   double analytic_factor1 ,analytic_factor2;
-  int time_step = 200000;
-  int num_spin = 10;
-  vector multi_spin[num_spin];
+  int time_step = 1000000;
+  int width=2, len=2;
+  int num_spin = width*len;
+  vector multi_spin[num_spin]; 
+  ///Use 2 array of spin, one for update t(x+1) spin, one for recording the t(x) spin information
+  ///dynamic memory C, use pointer to record the information; sth like ptr = (int*) malloc(100 * sizeof(int));
+  vector multi_spin_position[num_spin];
   vector totalspin={0.0,0.0,0.0};
   for(int i = 0; i < num_spin; i++) {
      multi_spin[i].x = 1.0;
@@ -80,6 +84,13 @@ int main(void)
      multi_spin[i].z = 0.0;
 //     printf("%.16f %.16f %.16f\n",multi_spin[i].x,multi_spin[i].y,multi_spin[i].z);
   }
+  for(int i = 0; i < num_spin; i++) {
+     multi_spin_position[i].x = i%width;
+     multi_spin_position[i].y = i/width;
+     multi_spin_position[i].z = 0.0;
+     printf("%.16f %.16f %.16f\n",multi_spin_position[i].x,multi_spin_position[i].y,multi_spin[i].z);
+  }
+
   vector analytic_spin={1.0 , 0.0, 0.0};
   vector rk1 ={0.0,0.0,0.0};
   vector rk2 ={0.0,0.0,0.0};
