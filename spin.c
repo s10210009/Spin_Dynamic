@@ -120,14 +120,41 @@ void find_spin_neighbor(VectorArray* neighbor_index,int num_spin,vector* multi_s
   }
 }
 
+void calculate_H_eff(vector* H_eff,VectorArray* neighbor_index,vector* multi_spin, int Nth_spin){
+   int neighbor1=neighbor_index[Nth_spin].neighbors[0];
+   int neighbor2=neighbor_index[Nth_spin].neighbors[1];
+   int neighbor3=neighbor_index[Nth_spin].neighbors[2];
+   int neighbor4=neighbor_index[Nth_spin].neighbors[3];
+   double Jxx=0.1;
+   double Jyy=0.1;
+   double Jzz=0.1;
+   H_eff[Nth_spin].x =H.x - Jxx* (multi_spin[Nth_spin].x*multi_spin[neighbor1].x + 
+	                          multi_spin[Nth_spin].x*multi_spin[neighbor2].x +
+			          multi_spin[Nth_spin].x*multi_spin[neighbor3].x +
+			          multi_spin[Nth_spin].x*multi_spin[neighbor4].x ) ;
+   H_eff[Nth_spin].y =H.y - Jyy* (multi_spin[Nth_spin].y*multi_spin[neighbor1].y +
+                                  multi_spin[Nth_spin].y*multi_spin[neighbor2].y +
+                                  multi_spin[Nth_spin].y*multi_spin[neighbor3].y +
+                                  multi_spin[Nth_spin].y*multi_spin[neighbor4].y ) ;
+	                    
+   H_eff[Nth_spin].z =H.z - Jzz* (multi_spin[Nth_spin].x*multi_spin[neighbor1].z +
+                                  multi_spin[Nth_spin].x*multi_spin[neighbor2].z +
+                                  multi_spin[Nth_spin].x*multi_spin[neighbor3].z +
+                                  multi_spin[Nth_spin].x*multi_spin[neighbor4].z ) ;
+//   printf("%d %d %d %d, neighbor index\n", neighbor1,neighbor2,neighbor3,neighbor4);
+//   H_eff.x = multi_spin[Nth_spin].x*(multi_spin[].x)
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(void)
 {
   double analytic_factor1 ,analytic_factor2;
-  int time_step = 1000000;
+  int time_step = 2;//1000000;
   int width=5, len=5;
   int num_spin = width*len;
+  vector H_eff[num_spin];
   vector multi_spin[num_spin]; 
   ///Use 2 array of spin, one for update t(x+1) spin, one for recording the t(x) spin information
   ///dynamic memory C, use pointer to record the information; sth like ptr = (int*) malloc(100 * sizeof(int));
@@ -161,8 +188,12 @@ int main(void)
   for(int i = 0; i < time_step; i++) {
     fprintf(fptr, "%.16f %.16f %.16f %.16f\n", dt*i, totalspin.x, totalspin.y, totalspin.z);
     totalspin.x=0.0,totalspin.y=0.0,totalspin.z=0.0;
-
+    
     for (int j = 0; j < num_spin; j++) {
+      calculate_H_eff(H_eff, neighbor_index, multi_spin, j);
+      printf("%.16f %.16f %.16f \n",H_eff[j].x, H_eff[j].y,H_eff[j].z);
+
+
       rk1 = f(multi_spin[j].x, multi_spin[j].y, multi_spin[j].z, 0.0);
       rk1 = scalarMultiply(rk1, dt);
 
@@ -188,4 +219,6 @@ int main(void)
   fclose(fptr);
   return 0;
 }
+
+
 
