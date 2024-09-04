@@ -7,6 +7,9 @@
 typedef struct {
     double x; double y; double z;
 } vector;
+typedef struct {
+    int neighbors[4];
+} VectorArray;
 
 
 /////////////////////////define vector caulation function////////////////////////////////////////
@@ -65,32 +68,81 @@ vector f(double fspinx, double fspiny, double fspinz,double dtime) {
     return d_spin;
 }
 
+void set_initial_spin(vector* multi_spin,int num_spin){
+
+  for(int i = 0; i < num_spin; i++) {
+     multi_spin[i].x = 1.0;
+     multi_spin[i].y = 0.0;
+     multi_spin[i].z = 0.0;
+     printf("%.16f %.16f %.16f\n",multi_spin[i].x,multi_spin[i].y,multi_spin[i].z);
+  }
+}
+
+void set_spin_position(vector* multi_spin_position,int num_spin, int width,int len){
+
+  for(int i = 0; i < num_spin; i++) {
+    multi_spin_position[i].x = i%width;
+    multi_spin_position[i].y = i/width;
+    multi_spin_position[i].z = 0.0;
+    printf("%.16f %.16f %.16f position\n",multi_spin_position[i].x,multi_spin_position[i].y,multi_spin_position[i].z);
+  }
+}
+
+
+void find_spin_neighbor(VectorArray* neighbor_index,int num_spin,vector* multi_spin_position, int width,int len){
+
+  for (int i = 0; i < num_spin; i++){
+    //-x方向
+    if (i%width==0){
+       neighbor_index[i].neighbors[0] = i+width-1;
+    } else{
+       neighbor_index[i].neighbors[0] = i-1;
+    }
+    //+x方向
+    if (i%width==4){
+       neighbor_index[i].neighbors[1] = i-width+1;
+    } else{
+       neighbor_index[i].neighbors[1] = i+1;
+    }
+    //-y方向
+    if (i/width==0){
+       neighbor_index[i].neighbors[2] = i+width*(len-1);
+    } else{
+       neighbor_index[i].neighbors[2] = i-width;
+    }
+    //+y方向
+    if (i/width==(len-1)){
+       neighbor_index[i].neighbors[3] = i-(width*(len-1));
+    } else{
+       neighbor_index[i].neighbors[3] = i+width;
+    }
+//    printf("%d %d %d %d %d, neighbor index\n",i, neighbor_index[i].neighbors[0],neighbor_index[i].neighbors[1],neighbor_index[i].neighbors[2],neighbor_index[i].neighbors[3]);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(void)
 {
   double analytic_factor1 ,analytic_factor2;
   int time_step = 1000000;
-  int width=2, len=2;
+  int width=5, len=5;
   int num_spin = width*len;
   vector multi_spin[num_spin]; 
   ///Use 2 array of spin, one for update t(x+1) spin, one for recording the t(x) spin information
   ///dynamic memory C, use pointer to record the information; sth like ptr = (int*) malloc(100 * sizeof(int));
   vector multi_spin_position[num_spin];
+  VectorArray neighbor_index[num_spin];
   vector totalspin={0.0,0.0,0.0};
-  for(int i = 0; i < num_spin; i++) {
-     multi_spin[i].x = 1.0;
-     multi_spin[i].y = 0.0;
-     multi_spin[i].z = 0.0;
-//     printf("%.16f %.16f %.16f\n",multi_spin[i].x,multi_spin[i].y,multi_spin[i].z);
-  }
-  for(int i = 0; i < num_spin; i++) {
-     multi_spin_position[i].x = i%width;
-     multi_spin_position[i].y = i/width;
-     multi_spin_position[i].z = 0.0;
-     printf("%.16f %.16f %.16f\n",multi_spin_position[i].x,multi_spin_position[i].y,multi_spin[i].z);
-  }
 
+  set_initial_spin(multi_spin,num_spin);
+  for (int i = 0; i < num_spin; i++) {
+     printf("Spin  %d: %.16f %.16f %.16f\n", i, multi_spin[i].x, multi_spin[i].y, multi_spin[i].z);
+  }
+  set_spin_position(multi_spin_position,num_spin, width, len);
+
+  find_spin_neighbor(neighbor_index,num_spin, multi_spin_position, width,len);
+  printf("%d  %d\n", neighbor_index[1].neighbors[0], neighbor_index[5].neighbors[3]);
   vector analytic_spin={1.0 , 0.0, 0.0};
   vector rk1 ={0.0,0.0,0.0};
   vector rk2 ={0.0,0.0,0.0};
@@ -107,13 +159,7 @@ int main(void)
  //////////////////////iteration of spin/////////////////////
 
   for(int i = 0; i < time_step; i++) {
-    analytic_factor1 = H_ext*lumba*gama*dt*(i)/(1+lumba*lumba);
-    analytic_factor2 = H_ext*gama*dt*(i)/(1+lumba*lumba);
-
-    analytic_spin.x = sech(analytic_factor1)*cos(analytic_factor2);
-    analytic_spin.y = sech(analytic_factor1)*sin(analytic_factor2);
-    analytic_spin.z = tanh(analytic_factor1);
-    fprintf(fptr, "%.16f %.16f %.16f %.16f %.16f %.16f %.16f\n", dt*i, totalspin.x, totalspin.y, totalspin.z, analytic_spin.x*num_spin,analytic_spin.y*num_spin,analytic_spin.z*num_spin);
+    fprintf(fptr, "%.16f %.16f %.16f %.16f\n", dt*i, totalspin.x, totalspin.y, totalspin.z);
     totalspin.x=0.0,totalspin.y=0.0,totalspin.z=0.0;
 
     for (int j = 0; j < num_spin; j++) {
@@ -142,6 +188,4 @@ int main(void)
   fclose(fptr);
   return 0;
 }
-
-
 
