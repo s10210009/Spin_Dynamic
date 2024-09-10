@@ -50,7 +50,7 @@ vector normalized(vector a){
 double sech(double x) {
     return 1 / cosh(x);
 }
-vector H = {0.0, 0.0, 10.0};
+vector H = {0.0, 0.0, 0.4};
 double H_ext=10.0;
 double lumba = 0.05;
 double gama = 1.76 * 1E11; // Update gamma to the larger value
@@ -74,7 +74,7 @@ void set_initial_spin(vector* multi_spin,int num_spin){
      multi_spin[i].x = 1.0;
      multi_spin[i].y = 0.0;
      multi_spin[i].z = 0.0;
-     printf("%.16f %.16f %.16f\n",multi_spin[i].x,multi_spin[i].y,multi_spin[i].z);
+//     printf("%.16f %.16f %.16f\n",multi_spin[i].x,multi_spin[i].y,multi_spin[i].z);
   }
 }
 
@@ -84,7 +84,7 @@ void set_spin_position(vector* multi_spin_position,int num_spin, int width,int l
     multi_spin_position[i].x = i%width;
     multi_spin_position[i].y = i/width;
     multi_spin_position[i].z = 0.0;
-    printf("%.16f %.16f %.16f position\n",multi_spin_position[i].x,multi_spin_position[i].y,multi_spin_position[i].z);
+//    printf("%.16f %.16f %.16f position\n",multi_spin_position[i].x,multi_spin_position[i].y,multi_spin_position[i].z);
   }
 }
 
@@ -116,7 +116,7 @@ void find_spin_neighbor(VectorArray* neighbor_index,int num_spin,vector* multi_s
     } else{
        neighbor_index[i].neighbors[3] = i+width;
     }
-    printf("%d %d %d %d %d, neighbor index\n",i, neighbor_index[i].neighbors[0],neighbor_index[i].neighbors[1],neighbor_index[i].neighbors[2],neighbor_index[i].neighbors[3]);
+//    printf("%d %d %d %d %d, neighbor index\n",i, neighbor_index[i].neighbors[0],neighbor_index[i].neighbors[1],neighbor_index[i].neighbors[2],neighbor_index[i].neighbors[3]);
   }
 }
 void calculate_H1_eff_app(vector* H_eff,VectorArray* neighbor_index,vector* multi_spin, int Nth_spin){
@@ -140,9 +140,9 @@ void calculate_H2_eff_exc(vector* H_eff,VectorArray* neighbor_index,vector* mult
    int neighbor2=neighbor_index[Nth_spin].neighbors[1];
    int neighbor3=neighbor_index[Nth_spin].neighbors[2];
    int neighbor4=neighbor_index[Nth_spin].neighbors[3];
-   double Jxx=0.1;
-   double Jyy=0.1;
-   double Jzz=0.1;
+   double Jxx=1.0;
+   double Jyy=1.0;
+   double Jzz=1.0;
    H_eff[Nth_spin].x += -Jxx* (multi_spin[Nth_spin].x*multi_spin[neighbor1].x + 
 	                          multi_spin[Nth_spin].x*multi_spin[neighbor2].x +
 			          multi_spin[Nth_spin].x*multi_spin[neighbor3].x +
@@ -168,7 +168,7 @@ int main(void)
 {
   double analytic_factor1 ,analytic_factor2;
   int time_step = 1000000;
-  int width=5, len=5;
+  int width=3, len=3;
   int num_spin = width*len;
   vector H_eff[num_spin];
   vector multi_spin[num_spin]; 
@@ -179,13 +179,9 @@ int main(void)
   vector totalspin={0.0,0.0,0.0};
 
   set_initial_spin(multi_spin,num_spin);
-  for (int i = 0; i < num_spin; i++) {
-     printf("Spin  %d: %.16f %.16f %.16f\n", i, multi_spin[i].x, multi_spin[i].y, multi_spin[i].z);
-  }
   set_spin_position(multi_spin_position,num_spin, width, len);
 
   find_spin_neighbor(neighbor_index,num_spin, multi_spin_position, width,len);
-  printf("%d  %d\n", neighbor_index[1].neighbors[0], neighbor_index[5].neighbors[3]);
   vector analytic_spin={1.0 , 0.0, 0.0};
   vector rk1 [num_spin];
   vector rk2 [num_spin];
@@ -203,6 +199,7 @@ int main(void)
 
   for(int i = 0; i < time_step; i++) {
     fprintf(fptr, "%.16f %.16f %.16f %.16f\n", dt*i, totalspin.x, totalspin.y, totalspin.z);
+    
     totalspin.x=0.0,totalspin.y=0.0,totalspin.z=0.0;
 
     for (int j = 0; j < num_spin; j++) {

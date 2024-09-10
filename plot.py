@@ -5,7 +5,7 @@ data = np.loadtxt('result.txt')
 data = np.array(data)
 data = np.transpose(data)
 t1=2
-t2=200000
+t2=100000000
 plt.figure()
 plt.plot(data[0,t1:t2],data[1,t1:t2], label='sx')
 #plt.plot(data[0,t1:t2],data[4,t1:t2], label='analtic_sx')
