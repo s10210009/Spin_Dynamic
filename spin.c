@@ -50,8 +50,9 @@ vector normalized(vector a){
 double sech(double x) {
     return 1 / cosh(x);
 }
-vector H = {0.0, 0.0, 0.4};
-double H_ext=10.0;
+vector H = {0.0, 0.0, 10.0};
+//vector H = {0.0, 0.0, 0.5};
+double H_ext=0.0;
 double lumba = 0.05;
 double gama = 1.76 * 1E11; // Update gamma to the larger value
 double dt = 1E-15;
@@ -71,9 +72,9 @@ vector f(double fspinx, double fspiny, double fspinz,double dtime, vector H_eff)
 void set_initial_spin(vector* multi_spin,int num_spin){
 
   for(int i = 0; i < num_spin; i++) {
-     multi_spin[i].x = 1.0;
+     multi_spin[i].x = 0.1;
      multi_spin[i].y = 0.0;
-     multi_spin[i].z = 0.0;
+     multi_spin[i].z = 0.99;
 //     printf("%.16f %.16f %.16f\n",multi_spin[i].x,multi_spin[i].y,multi_spin[i].z);
   }
 }
@@ -140,35 +141,44 @@ void calculate_H2_eff_exc(vector* H_eff,VectorArray* neighbor_index,vector* mult
    int neighbor2=neighbor_index[Nth_spin].neighbors[1];
    int neighbor3=neighbor_index[Nth_spin].neighbors[2];
    int neighbor4=neighbor_index[Nth_spin].neighbors[3];
-   double Jxx=1.0;
-   double Jyy=1.0;
-   double Jzz=1.0;
-   H_eff[Nth_spin].x += -Jxx* (multi_spin[Nth_spin].x*multi_spin[neighbor1].x + 
-	                          multi_spin[Nth_spin].x*multi_spin[neighbor2].x +
-			          multi_spin[Nth_spin].x*multi_spin[neighbor3].x +
-			          multi_spin[Nth_spin].x*multi_spin[neighbor4].x ) ;
+   double Jxx=0.3;
+   double Jyy=0.3;
+   double Jzz=0.3;
+   H_eff[Nth_spin].x += Jxx* (multi_spin[neighbor1].x + 
+	                       multi_spin[neighbor2].x +
+			       multi_spin[neighbor3].x +
+			       multi_spin[neighbor4].x ) ;
 
-   H_eff[Nth_spin].y += -Jyy* (multi_spin[Nth_spin].y*multi_spin[neighbor1].y +
-                                  multi_spin[Nth_spin].y*multi_spin[neighbor2].y +
-                                  multi_spin[Nth_spin].y*multi_spin[neighbor3].y +
-                                  multi_spin[Nth_spin].y*multi_spin[neighbor4].y ) ;
+   H_eff[Nth_spin].y += Jyy* (multi_spin[neighbor1].y +
+                               multi_spin[neighbor2].y +
+                               multi_spin[neighbor3].y +
+                               multi_spin[neighbor4].y ) ;
 	                    
-   H_eff[Nth_spin].z += -Jzz* (multi_spin[Nth_spin].x*multi_spin[neighbor1].z +
-                                  multi_spin[Nth_spin].x*multi_spin[neighbor2].z +
-                                  multi_spin[Nth_spin].x*multi_spin[neighbor3].z +
-                                  multi_spin[Nth_spin].x*multi_spin[neighbor4].z ) ;
+   H_eff[Nth_spin].z += Jzz* (multi_spin[neighbor1].z +
+                               multi_spin[neighbor2].z +
+                               multi_spin[neighbor3].z +
+                               multi_spin[neighbor4].z ) ;
 //   printf("%d %d %d %d, neighbor index\n", neighbor1,neighbor2,neighbor3,neighbor4);
 //   H_eff.x = multi_spin[Nth_spin].x*(multi_spin[].x)
 
 }
+
+void calculate_H3_eff_ani(vector* H_eff,VectorArray* neighbor_index,vector* multi_spin, int Nth_spin){
+   double ku=-1;
+
+   H_eff[Nth_spin].z += -ku*2.0*multi_spin[Nth_spin].z;
+
+
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(void)
 {
   double analytic_factor1 ,analytic_factor2;
-  int time_step = 1000000;
-  int width=3, len=3;
+  int time_step = 3000000;
+  int width=5, len=5;
   int num_spin = width*len;
   vector H_eff[num_spin];
   vector multi_spin[num_spin]; 
@@ -198,32 +208,41 @@ int main(void)
  //////////////////////iteration of spin/////////////////////
 
   for(int i = 0; i < time_step; i++) {
-    fprintf(fptr, "%.16f %.16f %.16f %.16f\n", dt*i, totalspin.x, totalspin.y, totalspin.z);
+    if (i % 100 == 0) {
+    fprintf(fptr, "%.16f %.16f %.16f %.16f \n", dt*i, totalspin.x, totalspin.y, totalspin.z);
+    printf("%.16f %.16f %.16f %.16f result\n", dt*i, totalspin.x, totalspin.y, totalspin.z);
+    }
+    //fprintf(fptr, "%.16f %.16f %.16f %.16f\n", dt*i, totalspin.x, totalspin.y, totalspin.z);
     
     totalspin.x=0.0,totalspin.y=0.0,totalspin.z=0.0;
 
     for (int j = 0; j < num_spin; j++) {
       calculate_H1_eff_app(H_eff, neighbor_index, multi_spin, j);
+      //printf("%.16f %.16f %.16f  \n",H_eff[j].x, H_eff[j].y,H_eff[j].z);
       calculate_H2_eff_exc(H_eff, neighbor_index, multi_spin, j);
-      //printf("%.16f %.16f %.16f \n",H_eff[j].x, H_eff[j].y,H_eff[j].z);
+     // printf("%.16f %.16f %.16f H_exc \n",H_eff[j].x, H_eff[j].y,H_eff[j].z);
+      calculate_H3_eff_ani(H_eff, neighbor_index, multi_spin, j); 
       rk1[j] = f(multi_spin[j].x, multi_spin[j].y, multi_spin[j].z, 0.0,H_eff[j]);
       rk1[j] = scalarMultiply(rk1[j], dt);
     }
     for (int j = 0; j < num_spin; j++) {
       calculate_H1_eff_app(H_eff, neighbor_index, rk1, j);
       calculate_H2_eff_exc(H_eff, neighbor_index, rk1, j);
+      calculate_H3_eff_ani(H_eff, neighbor_index, multi_spin, j);
       rk2[j] = f(multi_spin[j].x + rk1[j].x/2.0, multi_spin[j].y + rk1[j].y/2.0, multi_spin[j].z + rk1[j].z/2.0, 0.5*dt,H_eff[j]);
       rk2[j] = scalarMultiply(rk2[j], dt);
     }
     for (int j = 0; j < num_spin; j++) {
       calculate_H1_eff_app(H_eff, neighbor_index, rk2, j);
       calculate_H2_eff_exc(H_eff, neighbor_index, rk2, j);
+      calculate_H3_eff_ani(H_eff, neighbor_index, multi_spin, j);
       rk3[j] = f(multi_spin[j].x + rk2[j].x/2.0, multi_spin[j].y + rk2[j].y/2.0, multi_spin[j].z + rk2[j].z/2.0, 0.5*dt,H_eff[j]);
       rk3[j] = scalarMultiply(rk3[j], dt);
     }
     for (int j = 0; j < num_spin; j++) {
       calculate_H1_eff_app(H_eff, neighbor_index, rk3, j);
       calculate_H2_eff_exc(H_eff, neighbor_index, rk3, j);
+      calculate_H3_eff_ani(H_eff, neighbor_index, multi_spin, j);
       rk4[j] = f(multi_spin[j].x + rk3[j].x, multi_spin[j].y + rk3[j].y, multi_spin[j].z + rk3[j].z, dt,H_eff[j]);
       rk4[j] = scalarMultiply(rk4[j], dt);
     }
@@ -238,7 +257,7 @@ int main(void)
       totalspin.x+=multi_spin[j].x; totalspin.y+=multi_spin[j].y; totalspin.z+=multi_spin[j].z;
     }
   }  
-  
+  fprintf(fptr, "%.16f %.16f %.16f \n", H.x,H.y,H.z);
   fclose(fptr);
   return 0;
 }
